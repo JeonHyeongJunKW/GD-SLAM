@@ -25,35 +25,41 @@ chmod +x build.sh
 ./build.sh
 ```
 #### 사용하기 
-: 기존 DynaSLAM과 동일합니다.
-## Stereo Example on KITTI Dataset
-- Download the dataset (grayscale images) from http://www.cvlibs.net/datasets/kitti/eval_odometry.php 
-
-- Execute the following command. Change `KITTIX.yaml`to KITTI00-02.yaml, KITTI03.yaml or KITTI04-12.yaml for sequence 0 to 2, 3, and 4 to 12 respectively. Change `PATH_TO_DATASET_FOLDER` to the uncompressed dataset folder. Change `SEQUENCE_NUMBER` to 00, 01, 02,.., 11. By providing the last argument `PATH_TO_MASKS`, dynamic objects are detected with Mask R-CNN.
-```
-./Examples/Stereo/stereo_kitti Vocabulary/ORBvoc.txt Examples/Stereo/KITTIX.yaml PATH_TO_DATASET_FOLDER/dataset/sequences/SEQUENCE_NUMBER (PATH_TO_MASKS)
-```
-
-## Monocular Example on TUM Dataset
+: 기존 DynaSLAM과 동일합니다. RGB-D 예제만 사용가능합니다. 
+- Place the `mask_rcnn_coco.h5` model in the folder `GD-SLAM/src/python/`.
+## RGB-D Example on TUM Dataset
 - Download a sequence from http://vision.in.tum.de/data/datasets/rgbd-dataset/download and uncompress it.
 
-- Execute the following command. Change `TUMX.yaml` to TUM1.yaml,TUM2.yaml or TUM3.yaml for freiburg1, freiburg2 and freiburg3 sequences respectively. Change `PATH_TO_SEQUENCE_FOLDER`to the uncompressed sequence folder. By providing the last argument `PATH_TO_MASKS`, dynamic objects are detected with Mask R-CNN.
-```
-./Examples/Monocular/mono_tum Vocabulary/ORBvoc.txt Examples/Monocular/TUMX.yaml PATH_TO_SEQUENCE_FOLDER (PATH_TO_MASKS)
-```
+- Associate RGB images and depth images executing the python script [associate.py](http://vision.in.tum.de/data/datasets/rgbd-dataset/tools):
 
-## Monocular Example on KITTI Dataset
-- Download the dataset (grayscale images) from http://www.cvlibs.net/datasets/kitti/eval_odometry.php 
+  ```
+  python associate.py PATH_TO_SEQUENCE/rgb.txt PATH_TO_SEQUENCE/depth.txt > associations.txt
+  ```
+These associations files are given in the folder `./Examples/RGB-D/associations/` for the TUM dynamic sequences.
 
-- Execute the following command. Change `KITTIX.yaml`by KITTI00-02.yaml, KITTI03.yaml or KITTI04-12.yaml for sequence 0 to 2, 3, and 4 to 12 respectively. Change `PATH_TO_DATASET_FOLDER` to the uncompressed dataset folder. Change `SEQUENCE_NUMBER` to 00, 01, 02,.., 11. By providing the last argument `PATH_TO_MASKS`, dynamic objects are detected with Mask R-CNN.
-```
-./Examples/Monocular/mono_kitti Vocabulary/ORBvoc.txt Examples/Monocular/KITTIX.yaml PATH_TO_DATASET_FOLDER/dataset/sequences/SEQUENCE_NUMBER (PATH_TO_MASKS)
-```
+- Execute the following command. Change `TUMX.yaml` to TUM1.yaml,TUM2.yaml or TUM3.yaml for freiburg1, freiburg2 and freiburg3 sequences respectively. Change `PATH_TO_SEQUENCE_FOLDER` to the uncompressed sequence folder. Change `ASSOCIATIONS_FILE` to the path to the corresponding associations file. `PATH_TO_MASKS` and `PATH_TO_OUTPUT` are optional parameters.
+
+  ```
+  ./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUMX.yaml PATH_TO_SEQUENCE_FOLDER ASSOCIATIONS_FILE (PATH_TO_MASKS) (PATH_TO_OUTPUT)
+  ```
+  
+If `PATH_TO_MASKS` and `PATH_TO_OUTPUT` are **not** provided, only the geometrical approach is used to detect dynamic objects. 
+
+If `PATH_TO_MASKS` is provided, Mask R-CNN is used to segment the potential dynamic content of every frame. These masks are saved in the provided folder `PATH_TO_MASKS`. If this argument is `no_save`, the masks are used but not saved. If it finds the Mask R-CNN computed dynamic masks in `PATH_TO_MASKS`, it uses them but does not compute them again.
+
+If `PATH_TO_OUTPUT` is provided, the inpainted frames are computed and saved in `PATH_TO_OUTPUT`.
+
 
 ## reference
 ### DynaSLAM : PushyamiKaveti의 pushyami-dev branch 
 
 사용이유 : 원래 DynaSLAM이 conversion.cc에서 python의 numpy object를 Mat으로 바꿀 때 에러가 났고, 해당 문제를 해결함.
+
+수정한 점 : 
+
+- Examples/RGB-D/TUM3.yaml에서 뽑는 feature의 갯수를 1500개로 조정하였습니다.
+- CMakeLists.txt파일에서 Eigen3 패키지 찾는부분을 수정하였습니다.
+- src/GeoMaskMaker.cc와 src/GeoMaskMaker.h의 코드를 추가하였고, 해당 파일들은 메인 알고리즘이 담겨있습니다. 또한 이것을 DynaSLAM에 접목하기위하여, src/Tracking.cc와  Examples/RGB-D/rgbd_tum.cc를 수정하엿습니다.
 
 해당 브랜치 : https://github.com/PushyamiKaveti/DynaSLAM/tree/pushyami-dev
 
